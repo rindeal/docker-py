@@ -93,7 +93,7 @@ class ImageApiMixin(object):
         return res
 
     def import_image(self, src=None, repository=None, tag=None, image=None,
-                     changes=None, stream_src=False):
+                     changes=None, stream_src=False, message=None):
         """
         Import an image. Similar to the ``docker import`` command.
 
@@ -122,7 +122,7 @@ class ImageApiMixin(object):
         params = _import_image_params(
             repository, tag, image,
             src=(src if isinstance(src, six.string_types) else None),
-            changes=changes
+            changes=changes, message=message
         )
         headers = {'Content-Type': 'application/tar'}
 
@@ -145,7 +145,7 @@ class ImageApiMixin(object):
             )
 
     def import_image_from_data(self, data, repository=None, tag=None,
-                               changes=None):
+                               changes=None, message=None):
         """
         Like :py:meth:`~docker.api.image.ImageApiMixin.import_image`, but
         allows importing in-memory bytes data.
@@ -158,7 +158,7 @@ class ImageApiMixin(object):
 
         u = self._url('/images/create')
         params = _import_image_params(
-            repository, tag, src='-', changes=changes
+            repository, tag, src='-', changes=changes, message=message
         )
         headers = {'Content-Type': 'application/tar'}
         return self._result(
@@ -168,7 +168,7 @@ class ImageApiMixin(object):
         )
 
     def import_image_from_file(self, filename, repository=None, tag=None,
-                               changes=None):
+                               changes=None, message=None):
         """
         Like :py:meth:`~docker.api.image.ImageApiMixin.import_image`, but only
         supports importing from a tar file on disk.
@@ -183,18 +183,19 @@ class ImageApiMixin(object):
         """
 
         return self.import_image(
-            src=filename, repository=repository, tag=tag, changes=changes
+            src=filename, repository=repository, tag=tag, changes=changes,
+            message=message
         )
 
     def import_image_from_stream(self, stream, repository=None, tag=None,
-                                 changes=None):
+                                 changes=None, message=None):
         return self.import_image(
             src=stream, stream_src=True, repository=repository, tag=tag,
-            changes=changes
+            changes=changes, message=message
         )
 
     def import_image_from_url(self, url, repository=None, tag=None,
-                              changes=None):
+                              changes=None, message=None):
         """
         Like :py:meth:`~docker.api.image.ImageApiMixin.import_image`, but only
         supports importing from a URL.
@@ -205,11 +206,12 @@ class ImageApiMixin(object):
             tag (str): The tag to apply
         """
         return self.import_image(
-            src=url, repository=repository, tag=tag, changes=changes
+            src=url, repository=repository, tag=tag, changes=changes,
+            message=message
         )
 
     def import_image_from_image(self, image, repository=None, tag=None,
-                                changes=None):
+                                changes=None, message=None):
         """
         Like :py:meth:`~docker.api.image.ImageApiMixin.import_image`, but only
         supports importing from another image, like the ``FROM`` Dockerfile
@@ -221,7 +223,8 @@ class ImageApiMixin(object):
             tag (str): The tag to apply
         """
         return self.import_image(
-            image=image, repository=repository, tag=tag, changes=changes
+            image=image, repository=repository, tag=tag, changes=changes,
+            message=message
         )
 
     @utils.check_resource('image')
@@ -544,7 +547,7 @@ def is_file(src):
 
 
 def _import_image_params(repo, tag, image=None, src=None,
-                         changes=None):
+                         changes=None, message=None):
     params = {
         'repo': repo,
         'tag': tag,
@@ -558,5 +561,8 @@ def _import_image_params(repo, tag, image=None, src=None,
 
     if changes:
         params['changes'] = changes
+
+    if message:
+        params['message'] = message
 
     return params
